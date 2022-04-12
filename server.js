@@ -34,37 +34,21 @@ app.use(express.json())
 app.use("/items", routerItem)
 
 
-//let listaDB  //deberia ser por import
 const fetchItems = async () => { //preguntar a mongo los pares nombre precio para 
-    listaDB = await fetch('http://localhost:9000/items').then(r => r.json())
-
+    listaDB = await fetch(`http://localhost:9000/items`).then(r => r.json())
 }
 
  
 
-
 app.post("/create_preference", async (req, res) => {
-
-    let p = await fetchItems()
     
-    /*
+    listaDB = await fetchItems()
+     
 
-    //  let itemInput = {name: req.body.description, price : req.body.price}
-    //  let listaItems = listaDB[0]
-    //  let itemBack = {name: listaItems.name, price: listaItems.price}
-    //  console.log(listaItems)
-    //   console.log(itemInput,itemBack)
-    //   console.log(JSON.stringify(itemInput) == JSON.stringify(itemBack))
-
-
-    //verificacion integridad
     let arrReq = Array.from(req.body)
-
-    let listaMongo = listaDB
-
-
     let arrLocales = []
-    let arrDB = []
+
+    //setear array preferencias
     for (let i = 0; i < arrReq.length; i++) { // setea preferencia de cada item
         let producto = {
             title: req.body[i].description,
@@ -75,13 +59,10 @@ app.post("/create_preference", async (req, res) => {
     }
 
 
+
+    //listas para comparar
     let arrLocalComparable = arrLocales.map(prod => JSON.stringify(({ title: prod.title, unit_price: prod.unit_price })))
     let arrDBComparable = listaDB.map(prod => JSON.stringify(({ title: prod.name, unit_price: prod.price })))
-
-
-    //verificacion
-
-
 
     console.log("lista local: ", arrLocalComparable)
     console.log("lista db ", arrDBComparable)
@@ -96,47 +77,55 @@ app.post("/create_preference", async (req, res) => {
         });
     }
 
-
     const coincidenTodasEnDB = () => listaCoincidencias.every(ele => ele == true)
-    
+
 
     verificar()
-    console.log(listaCoincidencias) */
-    if (true) {
-        // if (JSON.stringify(listaItems) == JSON.stringify(arrAtributos)) {  //verificar
-        let preference = {
-            items: arrLocales,
-            back_urls: {
-                "success": "http://localhost:8080/feedback",
-                "failure": "http://localhost:8080/feedback",
-                "pending": "http://localhost:8080/feedback"
-            },
-            auto_return: "approved",
-        };
+    console.log(listaCoincidencias)
+    try {
+        if (coincidenTodasEnDB()) {
+            console.log(arrLocales)
+            let preference = {
+                items: arrLocales,
+                back_urls: {
+                    "success": "http://localhost:9000/feedback",
+                    "failure": "http://localhost:9000/feedback",
+                    "pending": "http://localhost:9000/feedback"
+                },
+                auto_return: "approved",
+            };
 
-        mercadopago.preferences.create(preference)
-            .then(function (response) {
-                res.json({
-                    id: response.body.id
+            mercadopago.preferences.create(preference)
+                .then(function (response) {
+                    res.json({
+                        id: response.body.id
+                    });
+                }).catch(function (error) {
+                    console.log(error);
                 });
-            }).catch(function (error) {
-                console.log(error);
-            });
-        /* } else{
-             console.warn("precio con ese nombre no existe en DB")
-         */
-        //   }
-    } else {
-        console.log("existe un item que no concuerda con la DB")
+
+        } else {
+            console.log("existe un item que no concuerda con la DB")
+        }
+    } catch {
+        console.log(error)
     }
 });
 
+app.get('/feedback', function (req, res) {
+    let info = {
+        Payment: req.query.payment_id,
+        Status: req.query.status,
+        MerchantOrder: req.query.merchant_order_id
+    };
+    console.log(info)
+    res.redirect("/#carrito")
+});
 
-// config
-const PORT = config.PORT  // config toma de package.json
+
+
+// config 
 const server = app.listen(PORT, () => console.log(`Servidor express escuchando en el puerto ${PORT}`))
 server.on('error', error => console.log(`Error en servidor express: ${error.message}`))
-
-
 
 
