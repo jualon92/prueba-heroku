@@ -16,7 +16,10 @@ mercadopago.configure({
     access_token: "APP_USR-415255069673949-013103-53933e062c46695b33189542f57470bc-92731233",
 });
 
- 
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 Mongo_DB.conectarDB() //conexion base de datos + feedback
 
@@ -28,7 +31,7 @@ app.use(express.static('public'))
 app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 
- 
+app.use("/items", routerItem)
 
 
 
