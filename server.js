@@ -40,7 +40,7 @@ const fetchItems = async () => { //preguntar a mongo los pares nombre precio par
 
 }
 
-fetchItems()
+ 
 
 
 app.post("/create_preference", async (req, res) => {
