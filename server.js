@@ -44,6 +44,9 @@ const fetchItems = async () => { //preguntar a mongo los pares nombre precio par
 
 
 app.post("/create_preference", async (req, res) => {
+
+    let p = await fetchItems()
+    
     /*
 
     //  let itemInput = {name: req.body.description, price : req.body.price}
