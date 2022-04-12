@@ -46,31 +46,71 @@ app.post("/create_preference", async (req, res) => {
     listaDB = await fetchItems()
 
 
-    if (true) {
-        console.log(arrLocales)
-        let preference = {
-            items: arrLocales,
-            back_urls: {
-                "success": "http://localhost:9000/feedback",
-                "failure": "http://localhost:9000/feedback",
-                "pending": "http://localhost:9000/feedback"
-            },
-            auto_return: "approved",
-        };
+    let arrReq = Array.from(req.body)
+    let arrLocales = []
 
-        mercadopago.preferences.create(preference)
-            .then(function (response) {
-                res.json({
-                    id: response.body.id
-                });
-            }).catch(function (error) {
-                console.log(error);
-            });
-
-    } else {
-        console.log("existe un item que no concuerda con la DB")
+    //setear array preferencias
+    for (let i = 0; i < arrReq.length; i++) { // setea preferencia de cada item
+        let producto = {
+            title: req.body[i].description,
+            unit_price: Number(req.body[i].price),
+            quantity: Number(req.body[i].quantity),
+        }
+        arrLocales.push(producto)
     }
 
+
+
+    //listas para comparar
+    let arrLocalComparable = arrLocales.map(prod => JSON.stringify(({ title: prod.title, unit_price: prod.unit_price })))
+    let arrDBComparable = listaDB.map(prod => JSON.stringify(({ title: prod.name, unit_price: prod.price })))
+
+    console.log("lista local: ", arrLocalComparable)
+    console.log("lista db ", arrDBComparable)
+
+    let listaCoincidencias = []
+
+    function verificar() {
+
+        arrLocalComparable.forEach(localSTR => { //por cada item en la lista
+            let estaEnDB = arrDBComparable.includes(localSTR)
+            listaCoincidencias.push(estaEnDB)
+        });
+    }
+
+    const coincidenTodasEnDB = () => listaCoincidencias.every(ele => ele == true)
+
+
+    verificar()
+    console.log(listaCoincidencias)
+    try {
+        if (coincidenTodasEnDB()) {
+            console.log(arrLocales)
+            let preference = {
+                items: arrLocales,
+                back_urls: {
+                    "success": "http://localhost:9000/feedback",
+                    "failure": "http://localhost:9000/feedback",
+                    "pending": "http://localhost:9000/feedback"
+                },
+                auto_return: "approved",
+            };
+
+            mercadopago.preferences.create(preference)
+                .then(function (response) {
+                    res.json({
+                        id: response.body.id
+                    });
+                }).catch(function (error) {
+                    console.log(error);
+                });
+
+        } else {
+            console.log("existe un item que no concuerda con la DB")
+        }
+    } catch {
+        console.log(error)
+    }
 });
 
 app.get('/feedback', function (req, res) {
